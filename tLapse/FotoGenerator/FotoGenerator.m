@@ -39,7 +39,6 @@
 		self.captureTime = 0;
 		self.imageCounter = 0;
 		self.dataManager = [DataManager defaultManager];
-		[self configureTimer];
 		self.session = [AVCaptureSession new];
 		[self configureCaptureSession];
 		[self configureFotoView];
@@ -48,11 +47,13 @@
 		[self configureCaptureDevice];
 		[self configureCaptureConnection];
 		[self.session startRunning];
+		[self getImageAndSave:NO];
 	}
 	return self;
 }
 
 - (void)startCapturing {
+	[self configureTimer];
 	[self addTimerToRunloop];
 }
 
@@ -171,14 +172,20 @@
 #pragma mark -
 
 - (void)getImage {
+	[self getImageAndSave:YES];
+}
+
+- (void)getImageAndSave:(BOOL)doSave {
 	[self.stillImageOutput captureStillImageAsynchronouslyFromConnection:self.videoConnection
 												  completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
-													  NSData *imageData = [self imageDataFromSampleBuffer:imageDataSampleBuffer];
-													  [DataManager storeData:imageData withFileName:[NSString stringWithFormat:@"timeLapsImage_%ld", (long)self.imageCounter]];
-													  NSDateFormatter *formatter = [NSDateFormatter new];
-													  formatter.dateStyle = NSDateFormatterShortStyle;
-													  formatter.timeStyle = NSDateFormatterLongStyle;
-													  NSLog(@"finished to generate image now: %@", [formatter stringFromDate:[NSDate date]]);
+													  if (doSave) {
+														  NSData *imageData = [self imageDataFromSampleBuffer:imageDataSampleBuffer];
+														  [DataManager storeData:imageData withFileName:[NSString stringWithFormat:@"timeLapsImage_%ld", (long)self.imageCounter]];
+														  NSDateFormatter *formatter = [NSDateFormatter new];
+														  formatter.dateStyle = NSDateFormatterShortStyle;
+														  formatter.timeStyle = NSDateFormatterLongStyle;
+														  NSLog(@"finished to generate image now: %@", [formatter stringFromDate:[NSDate date]]);
+													  }
 												  }];
 }
 

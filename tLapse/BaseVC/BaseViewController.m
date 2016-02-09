@@ -8,6 +8,7 @@
 
 #import "BaseViewController.h"
 #import "FotoGenerator.h"
+#import "DataManager.h"
 
 @interface BaseViewController () <FotoGeneratorDelegate>
 
@@ -15,12 +16,16 @@
 @property (weak, nonatomic) IBOutlet UIView *cameraView;
 @property (weak, nonatomic) IBOutlet UIButton *startButton;
 
+@property (nonatomic, strong) FotoGenerator *generator;
+
 @end
 
 @implementation BaseViewController
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
+	self.generator = [[FotoGenerator alloc] initWithFotoView:self.cameraView inOrientation:self.interfaceOrientation];
+	self.generator.delegate = self;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -32,10 +37,9 @@
 #pragma mark -
 
 - (IBAction)startButtonTouched:(id)sender {
-	FotoGenerator *genertor = [[FotoGenerator alloc] initWithFotoView:self.cameraView inOrientation:self.interfaceOrientation];
-	genertor.numberOfImagesToCapture = 3;
-	genertor.delegate = self;
-	[genertor startCapturing];
+	self.startButton.enabled = NO;
+	self.generator.numberOfImagesToCapture = 3;
+	[self.generator startCapturing];
 }
 
 #pragma mark -
@@ -43,7 +47,9 @@
 #pragma mark -
 
 - (void)fotoGeneratorDidFinished:(FotoGenerator *)generator {
+	[DataManager cleanup];
 	NSLog(@"FERTIG");
+	self.startButton.enabled = YES;
 }
 
 @end

@@ -22,7 +22,7 @@
 	self = [super init];
 	if (self != nil) {
 		self.fileManager = [NSFileManager defaultManager];
-		self.basePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"ImageData"];
+		[self configureBasePath];
 		[self.fileManager createDirectoryAtPath:self.basePath
 					withIntermediateDirectories:YES
 									 attributes:nil
@@ -41,9 +41,9 @@
 }
 
 + (void)storeData:(NSData *)data withFileName:(NSString *)fileName {
-//	DataManager* dataManager = [DataManager defaultManager];
-//	[data writeToFile:[dataManager.basePath stringByAppendingPathComponent:fileName] atomically:YES];
-	UIImageWriteToSavedPhotosAlbum([UIImage imageWithData:data], nil, nil, NULL);
+	DataManager* dataManager = [DataManager defaultManager];
+	[data writeToFile:[dataManager.basePath stringByAppendingPathComponent:fileName] atomically:YES];
+//	UIImageWriteToSavedPhotosAlbum([UIImage imageWithData:data], nil, nil, NULL);
 }
 
 + (NSArray *)getAllStoredFileNames {
@@ -64,6 +64,15 @@
 	NSString *basePath = [DataManager defaultManager].basePath;
 	for (NSString *fileName in fileNames) {
 		[[DataManager defaultManager].fileManager removeItemAtPath:[basePath stringByAppendingPathComponent:fileName] error:NULL];
+	}
+}
+
+- (void)configureBasePath {
+	NSArray<NSString *> *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+	if ([paths count] == 0) {
+		self.basePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"ImageData"];
+	} else {
+		self.basePath = [paths[0] stringByAppendingPathComponent:@"ImageData"];
 	}
 }
 
