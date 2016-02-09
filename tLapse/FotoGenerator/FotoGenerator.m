@@ -8,6 +8,7 @@
 
 #import "FotoGenerator.h"
 #import "DataManager.h"
+#import "Configuration.h"
 
 #import <AVFoundation/AVFoundation.h>
 #import <QuartzCore/QuartzCore.h>
@@ -139,7 +140,8 @@
 #pragma mark -
 
 - (void)configureTimer {
-	self.generatorTimer = [NSTimer timerWithTimeInterval:5.0 target:self selector:@selector(handleTimerEvent:) userInfo:nil repeats:YES];
+	NSTimeInterval interval = [Configuration sharedConfiguration].timeIntervalBetweenImages == 0 ? 5 : [Configuration sharedConfiguration].timeIntervalBetweenImages;
+	self.generatorTimer = [NSTimer timerWithTimeInterval:interval target:self selector:@selector(handleTimerEvent:) userInfo:nil repeats:YES];
 }
 
 - (void)addTimerToRunloop {
@@ -162,9 +164,6 @@
 	NSLog(@"begin to generate image now: %@", [formatter stringFromDate:[NSDate date]]);
 	[self getImage];
 	self.imageCounter++;
-	if (self.imageCounter == self.numberOfImagesToCapture) {
-		[self stopTimeLapsing];
-	}
 }
 
 #pragma mark -
@@ -176,15 +175,19 @@
 }
 
 - (void)getImageAndSave:(BOOL)doSave {
+	__weak typeof(self) weakSelf = self;
 	[self.stillImageOutput captureStillImageAsynchronouslyFromConnection:self.videoConnection
 												  completionHandler:^(CMSampleBufferRef imageDataSampleBuffer, NSError *error) {
 													  if (doSave) {
-														  NSData *imageData = [self imageDataFromSampleBuffer:imageDataSampleBuffer];
-														  [DataManager storeData:imageData withFileName:[NSString stringWithFormat:@"timeLapsImage_%ld", (long)self.imageCounter]];
+														  NSData *imageData = [weakSelf imageDataFromSampleBuffer:imageDataSampleBuffer];
+														  [DataManager storeData:imageData withFileName:[NSString stringWithFormat:@"timeLapsImage_%ld", (long)weakSelf.imageCounter]];
 														  NSDateFormatter *formatter = [NSDateFormatter new];
 														  formatter.dateStyle = NSDateFormatterShortStyle;
 														  formatter.timeStyle = NSDateFormatterLongStyle;
 														  NSLog(@"finished to generate image now: %@", [formatter stringFromDate:[NSDate date]]);
+														  if (weakSelf.imageCounter == weakSelf.numberOfImagesToCapture) {
+															  [weakSelf stopTimeLapsing];
+														  }
 													  }
 												  }];
 }

@@ -48,8 +48,18 @@
 
 + (NSArray *)getAllStoredFileNames {
 	DataManager* dataManager = [DataManager defaultManager];
+	NSMutableArray *resultNames = [NSMutableArray new];
 	NSArray *allNames = [dataManager.fileManager contentsOfDirectoryAtPath:dataManager.basePath error:NULL];
-	return allNames;
+	for (NSString *name in allNames) {
+		[resultNames addObject:[dataManager.basePath stringByAppendingPathComponent:name]];
+	}
+	return [resultNames sortedArrayUsingComparator:^NSComparisonResult(id  _Nonnull obj1, id  _Nonnull obj2) {
+		NSString *valueStr1 = [obj1 lastPathComponent];
+		NSInteger value1 = [[valueStr1 stringByReplacingCharactersInRange:NSMakeRange(0, [@"timeLapsImage_" length]) withString:@""] integerValue];
+		NSString *valueStr2 = [obj2 lastPathComponent];
+		NSInteger value2 = [[valueStr2 stringByReplacingCharactersInRange:NSMakeRange(0, [@"timeLapsImage_" length]) withString:@""] integerValue];
+		return value1 - value2;
+	}];
 }
 
 + (NSData *)getFileDataAtIndex:(NSUInteger)index {
@@ -61,9 +71,8 @@
 
 + (void)cleanup {
 	NSArray *fileNames = [DataManager getAllStoredFileNames];
-	NSString *basePath = [DataManager defaultManager].basePath;
 	for (NSString *fileName in fileNames) {
-		[[DataManager defaultManager].fileManager removeItemAtPath:[basePath stringByAppendingPathComponent:fileName] error:NULL];
+		[[DataManager defaultManager].fileManager removeItemAtPath:fileName error:NULL];
 	}
 }
 
